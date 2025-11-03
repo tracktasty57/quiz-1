@@ -1,6 +1,18 @@
 import { Routes, Route } from 'react-router-dom'
 import { Layout } from './components/layout'
-import { Home, Dashboard, Recipes, Shopping, MealPlanner, Services, About, Contact, Login, Register } from './pages'
+import ProtectedRoute from './components/ProtectedRoute' // ✅ Added import
+import { 
+  Home, 
+  Dashboard, 
+  Recipes, 
+  Shopping, 
+  MealPlanner, 
+  Services, 
+  About, 
+  Contact, 
+  Login, 
+  Register 
+} from './pages'
 import './App.css'
 
 // 404 Not Found component
@@ -37,117 +49,154 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       
-      {/* Main app pages with layout */}
-      <Route path="/" element={
-        <Layout 
-          title="Recipe Finder - Your Culinary Companion"
-          description="Discover amazing recipes, manage your kitchen, and plan delicious meals with Recipe Finder"
-          headerProps={{
-            brandText: "Recipe Finder",
-            showAuthLinks: true,
-            isAuthenticated: false
-          }}
-          footerProps={{
-            projectName: "Recipe Finder",
-            showSocialLinks: true,
-            showNavigationLinks: true
-          }}
-        >
-          <Home />
-        </Layout>
-      } />
-      
-      <Route path="/dashboard" element={
-        <Layout 
-          title="Dashboard - Recipe Finder"
-          headerProps={{
-            brandText: "Recipe Finder",
-            showAuthLinks: true,
-            isAuthenticated: true
-          }}
-        >
-          <Dashboard />
-        </Layout>
-      } />
+      {/* Public home page */}
+      <Route 
+        path="/" 
+        element={
+          <Layout 
+            title="Recipe Finder - Your Culinary Companion"
+            description="Discover amazing recipes, manage your kitchen, and plan delicious meals with Recipe Finder"
+            headerProps={{
+              brandText: "Recipe Finder",
+              showAuthLinks: true,
+              isAuthenticated: false // 👈 Shows Login & Register
+            }}
+            footerProps={{
+              projectName: "Recipe Finder",
+              showSocialLinks: true,
+              showNavigationLinks: true
+            }}
+          >
+            <Home />
+          </Layout>
+        } 
+      />
 
-      <Route path="/recipes" element={
-        <Layout 
-          title="Recipes - Recipe Finder"
-          description="Discover delicious recipes from around the world"
-          headerProps={{
-            brandText: "Recipe Finder",
-            showAuthLinks: true,
-            isAuthenticated: true
-          }}
-        >
-          <Recipes />
-        </Layout>
-      } />
+      {/* ✅ Protected Routes */}
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            <Layout 
+              title="Dashboard - Recipe Finder"
+              headerProps={{
+                brandText: "Recipe Finder",
+                showAuthLinks: true,
+                isAuthenticated: true
+              }}
+            >
+              <Dashboard />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
 
-      <Route path="/shopping" element={
-        <Layout 
-          title="Shopping List - Recipe Finder"
-          description="Organize your grocery shopping with smart lists"
-          headerProps={{
-            brandText: "Recipe Finder",
-            showAuthLinks: true,
-            isAuthenticated: true
-          }}
-        >
-          <Shopping />
-        </Layout>
-      } />
+      <Route 
+        path="/recipes" 
+        element={
+          <ProtectedRoute>
+            <Layout 
+              title="Recipes - Recipe Finder"
+              description="Discover delicious recipes from around the world"
+              headerProps={{
+                brandText: "Recipe Finder",
+                showAuthLinks: true,
+                isAuthenticated: true
+              }}
+            >
+              <Recipes />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
 
-      <Route path="/meal-planner" element={
-        <Layout 
-          title="Meal Planner - Recipe Finder"
-          description="Plan your weekly meals in advance"
-          headerProps={{
-            brandText: "Recipe Finder",
-            showAuthLinks: true,
-            isAuthenticated: true
-          }}
-        >
-          <MealPlanner />
-        </Layout>
-      } />
+      <Route 
+        path="/shopping" 
+        element={
+          <ProtectedRoute>
+            <Layout 
+              title="Shopping List - Recipe Finder"
+              description="Organize your grocery shopping with smart lists"
+              headerProps={{
+                brandText: "Recipe Finder",
+                showAuthLinks: true,
+                isAuthenticated: true
+              }}
+            >
+              <Shopping />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/meal-planner" 
+        element={
+          <ProtectedRoute>
+            <Layout 
+              title="Meal Planner - Recipe Finder"
+              description="Plan your weekly meals in advance"
+              headerProps={{
+                brandText: "Recipe Finder",
+                showAuthLinks: true,
+                isAuthenticated: true
+              }}
+            >
+              <MealPlanner />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* Other public pages */}
+      <Route 
+        path="/services" 
+        element={
+          <Layout 
+            title="Our Services - Recipe Finder"
+            description="Comprehensive culinary solutions for home cooks"
+          >
+            <Services />
+          </Layout>
+        } 
+      />
       
-      <Route path="/services" element={
-        <Layout 
-          title="Our Services - Recipe Finder"
-          description="Comprehensive culinary solutions for home cooks"
-        >
-          <Services />
-        </Layout>
-      } />
+      <Route 
+        path="/about" 
+        element={
+          <Layout 
+            title="About Us - Recipe Finder"
+            description="Learn about Recipe Finder and our mission to make cooking enjoyable"
+          >
+            <About />
+          </Layout>
+        } 
+      />
       
-      <Route path="/about" element={
-        <Layout 
-          title="About Us - Recipe Finder"
-          description="Learn about Recipe Finder and our mission to make cooking enjoyable"
-        >
-          <About />
-        </Layout>
-      } />
+      <Route 
+        path="/contact" 
+        element={
+          <Layout 
+            title="Contact Us - Recipe Finder"
+            description="Get in touch with the Recipe Finder team"
+          >
+            <Contact />
+          </Layout>
+        } 
+      />
       
-      <Route path="/contact" element={
-        <Layout 
-          title="Contact Us - Recipe Finder"
-          description="Get in touch with the Recipe Finder team"
-        >
-          <Contact />
-        </Layout>
-      } />
-      
-      {/* 404 page with layout */}
-      <Route path="*" element={
-        <Layout 
-          title="Page Not Found - Recipe Finder"
-          showFooter={false}
-        >
-          <NotFound />
-        </Layout>
-      } />
+      {/* 404 page */}
+      <Route 
+        path="*" 
+        element={
+          <Layout 
+            title="Page Not Found - Recipe Finder"
+            showFooter={false}
+          >
+            <NotFound />
+          </Layout>
+        } 
+      />
     </Routes>
   )
 }

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   ChefHat, 
   ShoppingCart, 
@@ -19,6 +19,19 @@ import { Card, CardHeader, CardTitle, CardDescription, CardBody, Button } from '
  * Recipe Finder Dashboard page component
  */
 export const Dashboard: React.FC = () => {
+  const [username, setUsername] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const storedName = localStorage.getItem('username');
+    if (!token) {
+      navigate('/login');
+    } else {
+      setUsername(storedName);
+    }
+  }, [navigate]);
+  
   const stats = [
     {
       title: 'Saved Recipes',
@@ -113,28 +126,24 @@ export const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-12">
-        {/* Dashboard Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 animate-fade-in">
-          <div className="space-y-2">
-            <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">
-              Recipe Finder{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-500">
-                Dashboard
-              </span>
-            </h1>
-            <p className="text-lg text-slate-600 max-w-2xl">
-              Welcome back! Here's your cooking overview and quick access to all features.
-            </p>
-          </div>
-        
-          <div className="flex justify-end">
-            <Button size="lg" className="group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
-              <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform" />
-              Add Recipe
-            </Button>
-          </div>
+ <div className="space-y-12">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 animate-fade-in">
+        <div className="space-y-2">
+          <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">
+            Welcome{username ? `, ${username}` : ''}! 👋
+          </h1>
+          <p className="text-lg text-slate-600 max-w-2xl">
+            Here’s your cooking overview and quick access to all features.
+          </p>
         </div>
+        <div className="flex justify-end">
+          <Button size="lg" className="group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
+            <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform" />
+            Add Recipe
+          </Button>
+        </div>
+      </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Eye, 
   EyeOff, 
@@ -11,11 +11,11 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { Card, CardBody, Button, Input } from '../components/ui';
+import { registerUser } from '../services/api';
 
-/**
- * Register page component with registration form
- */
 export const Register: React.FC = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,6 +27,7 @@ export const Register: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serverError, setServerError] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -34,70 +35,74 @@ export const Register: React.FC = () => {
       ...prev,
       [name]: value
     }));
-    
-    // Clear specific field error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
     }
+    setServerError('');
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-    
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters long';
     }
-    
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     return newErrors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setServerError('');
+
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setFormStatus('error');
       return;
     }
-    
+
     setFormStatus('loading');
     setErrors({});
-    
-    // Simulate registration API call
-    setTimeout(() => {
-      // Simulate success
+
+    try {
+      const res = await registerUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+
+      console.log('✅ Registration success:', res);
       setFormStatus('success');
-    }, 2000);
+
+      // Optional: redirect after short delay
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (err: any) {
+      console.error('Registration failed:', err);
+      setFormStatus('error');
+      setServerError(err.message || 'Registration failed. Try again later.');
+    }
   };
 
   const togglePasswordVisibility = (field: 'password' | 'confirmPassword') => {
-    if (field === 'password') {
-      setShowPassword(!showPassword);
-    } else {
-      setShowConfirmPassword(!showConfirmPassword);
-    }
+    if (field === 'password') setShowPassword(!showPassword);
+    else setShowConfirmPassword(!showConfirmPassword);
   };
 
   if (formStatus === 'success') {
@@ -112,22 +117,16 @@ export const Register: React.FC = () => {
                   Welcome to Recipe Finder!
                 </h1>
                 <p className="text-gray-600">
-                  Your culinary journey starts now. We've sent a verification email to{' '}
-                  <strong>{formData.email}</strong>
+                  Your culinary journey starts now.
                 </p>
               </div>
-              <div className="space-y-3">
-                <Button size="lg" className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
-                  <Link to="/login">
-                    Sign In to Your Account
-                  </Link>
-                </Button>
-                <Button variant="outline" size="lg" className="w-full">
-                  <Link to="/">
-                    Explore Recipes
-                  </Link>
-                </Button>
-              </div>
+              <Button
+                size="lg"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                onClick={() => navigate('/login')}
+              >
+                Sign In to Your Account
+              </Button>
             </CardBody>
           </Card>
         </div>
@@ -138,7 +137,6 @@ export const Register: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 py-12 px-4 sm:px-6 lg:px-8 animate-gradient">
       <div className="max-w-md w-full space-y-8">
-        {/* Header */}
         <div className="text-center space-y-4 animate-fade-in">
           <div className="mx-auto h-16 w-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg">
             <ChefHat className="h-8 w-8 text-white" />
@@ -146,31 +144,24 @@ export const Register: React.FC = () => {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
             Join Recipe Finder
           </h1>
-          <p className="text-gray-600">
-            Start your culinary adventure today
-          </p>
+          <p className="text-gray-600">Start your culinary adventure today</p>
         </div>
 
-        {/* Registration Form */}
         <Card className="backdrop-blur-md bg-white/70 border-white/20 shadow-xl animate-fade-in-up">
           <CardBody>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* General Error Message */}
-              {formStatus === 'error' && Object.keys(errors).length > 0 && (
+              {(serverError || (formStatus === 'error' && Object.keys(errors).length > 0)) && (
                 <div className="bg-red-50/80 backdrop-blur-sm border border-red-200/50 rounded-xl p-4 flex items-start space-x-3 animate-shake">
                   <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-red-800">Please fix the following errors:</p>
+                    <p className="text-sm font-medium text-red-800">Error</p>
                     <ul className="text-sm text-red-700 mt-1 list-disc list-inside">
-                      {Object.values(errors).map((error, index) => (
-                        <li key={index}>{error}</li>
-                      ))}
+                      {serverError ? <li>{serverError}</li> : Object.values(errors).map((err, i) => <li key={i}>{err}</li>)}
                     </ul>
                   </div>
                 </div>
               )}
 
-              {/* Name Field */}
               <Input
                 label="Full Name"
                 name="name"
@@ -182,7 +173,6 @@ export const Register: React.FC = () => {
                 error={errors.name}
               />
 
-              {/* Email Field */}
               <Input
                 label="Email Address"
                 name="email"
@@ -195,7 +185,6 @@ export const Register: React.FC = () => {
                 error={errors.email}
               />
 
-              {/* Password Field */}
               <div className="relative">
                 <Input
                   label="Password"
@@ -211,18 +200,12 @@ export const Register: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => togglePasswordVisibility('password')}
-                  className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
 
-              {/* Confirm Password Field */}
               <div className="relative">
                 <Input
                   label="Confirm Password"
@@ -238,21 +221,15 @@ export const Register: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => togglePasswordVisibility('confirmPassword')}
-                  className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
-                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
 
-              {/* Submit Button */}
-              <Button 
-                type="submit" 
-                size="lg" 
+              <Button
+                type="submit"
+                size="lg"
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200"
                 loading={formStatus === 'loading'}
               >
@@ -262,14 +239,10 @@ export const Register: React.FC = () => {
           </CardBody>
         </Card>
 
-        {/* Sign In Link */}
         <div className="text-center animate-fade-in-up">
           <p className="text-gray-600">
             Already have an account?{' '}
-            <Link 
-              to="/login"
-              className="text-orange-600 hover:text-red-600 font-medium transition-colors"
-            >
+            <Link to="/login" className="text-orange-600 hover:text-red-600 font-medium transition-colors">
               Sign in here
             </Link>
           </p>

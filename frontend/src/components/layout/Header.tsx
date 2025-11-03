@@ -1,30 +1,19 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { NAVIGATION_ITEMS, AUTH_NAVIGATION_ITEMS, NAVIGATION_LABELS } from '../../constants/navigation';
 import type { NavigationItem } from '../../types/navigation';
+import { removeToken } from '../../utils/auth'; // ✅ add this import
 
-/**
- * Props for the Header component
- */
 export interface HeaderProps {
-  /** Optional brand/logo text */
   brandText?: string;
-  /** Optional brand/logo image URL */
   brandImageUrl?: string;
-  /** Whether to show authentication links */
   showAuthLinks?: boolean;
-  /** Whether user is authenticated */
   isAuthenticated?: boolean;
-  /** Optional callback for logout */
   onLogout?: () => void;
-  /** Optional additional CSS classes */
   className?: string;
 }
 
-/**
- * Header component with responsive navigation
- */
 export const Header: React.FC<HeaderProps> = ({
   brandText = 'Recipe Finder',
   brandImageUrl,
@@ -35,24 +24,22 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate(); // ✅ for redirect
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
+  const isActivePath = (path: string) => location.pathname === path;
 
-  const isActivePath = (path: string): boolean => {
-    return location.pathname === path;
+  // ✅ handle logout here
+  const handleLogout = () => {
+    removeToken(); // clear JWT
+    if (onLogout) onLogout();
+    navigate('/login'); // redirect to login
   };
 
   const renderNavigationItem = (item: NavigationItem, isMobile = false) => {
-    // Skip auth-required items if user is not authenticated
-    if (item.requiresAuth && !isAuthenticated) {
-      return null;
-    }
+    if (item.requiresAuth && !isAuthenticated) return null;
 
     const Icon = item.icon;
     const isActive = isActivePath(item.path);
@@ -76,27 +63,26 @@ export const Header: React.FC<HeaderProps> = ({
         aria-current={isActive ? 'page' : undefined}
       >
         {Icon && (
-          <Icon
-            className="h-5 w-5 group-hover:scale-110 transition-transform duration-300"
-            aria-hidden="true"
-          />
+          <Icon className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
         )}
         <span className="group-hover:translate-x-1 transition-transform duration-300">{item.label}</span>
       </Link>
     );
   };
 
+  // ✅ Updated logout handling
   const renderAuthLinks = (isMobile = false) => {
     if (!showAuthLinks) return null;
 
     if (isAuthenticated) {
       return (
         <button
-          onClick={onLogout}
-          className={`${isMobile
-            ? 'flex items-center space-x-3 px-6 py-4 text-base font-medium text-red-600 hover:bg-red-50/80 rounded-xl transition-all duration-300 group'
-            : 'px-4 py-2 text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50/50 rounded-xl transition-all duration-300 group'
-            }`}
+          onClick={handleLogout} // ✅ updated
+          className={`${
+            isMobile
+              ? 'flex items-center space-x-3 px-6 py-4 text-base font-medium text-red-600 hover:bg-red-50/80 rounded-xl transition-all duration-300 group'
+              : 'px-4 py-2 text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50/50 rounded-xl transition-all duration-300 group'
+          }`}
         >
           <span className="group-hover:translate-x-1 transition-transform duration-300">Logout</span>
         </button>
@@ -110,23 +96,17 @@ export const Header: React.FC<HeaderProps> = ({
     <header className={`fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-orange-200/30 shadow-lg shadow-orange-500/10 ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Brand/Logo */}
+          {/* Brand */}
           <div className="flex items-center">
             <Link
               to="/"
               className="flex items-center space-x-3 text-2xl font-bold text-slate-900 hover:text-orange-600 transition-all duration-300 group"
             >
               {brandImageUrl ? (
-                <img
-                  src={brandImageUrl}
-                  alt={brandText}
-                  className="h-10 w-10 object-contain group-hover:scale-110 transition-transform duration-300"
-                />
+                <img src={brandImageUrl} alt={brandText} className="h-10 w-10 object-contain group-hover:scale-110 transition-transform duration-300" />
               ) : (
                 <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-                  <span className="text-white font-bold text-lg">
-                    RF
-                  </span>
+                  <span className="text-white font-bold text-lg">RF</span>
                 </div>
               )}
               <span className="hidden sm:block bg-gradient-to-r from-orange-600 to-red-500 bg-clip-text text-transparent">
@@ -151,19 +131,18 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={toggleMobileMenu}
               className="inline-flex items-center justify-center p-3 rounded-2xl text-slate-700 hover:text-orange-600 hover:bg-orange-50/80 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110 bg-white/80 backdrop-blur-sm border border-orange-200/30"
               aria-expanded={isMobileMenuOpen}
-              aria-label={isMobileMenuOpen ? NAVIGATION_LABELS.CLOSE_MENU : NAVIGATION_LABELS.MENU}
             >
               {isMobileMenuOpen ? (
-                <X className="h-6 w-6 rotate-90 transition-transform duration-300" aria-hidden="true" />
+                <X className="h-6 w-6 rotate-90 transition-transform duration-300" />
               ) : (
-                <Menu className="h-6 w-6 transition-transform duration-300" aria-hidden="true" />
+                <Menu className="h-6 w-6 transition-transform duration-300" />
               )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Navigation Menu */}
+      {/* Mobile Navigation */}
       {isMobileMenuOpen && (
         <div className="md:hidden animate-fade-in-up">
           <div className="mx-4 mt-4 mb-6 p-6 bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-orange-200/30">
@@ -172,9 +151,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {NAVIGATION_ITEMS.map(item => renderNavigationItem(item, true))}
               </div>
               <div className="border-t border-orange-200/50 pt-4 mt-4">
-                <div className="space-y-2">
-                  {renderAuthLinks(true)}
-                </div>
+                <div className="space-y-2">{renderAuthLinks(true)}</div>
               </div>
             </nav>
           </div>

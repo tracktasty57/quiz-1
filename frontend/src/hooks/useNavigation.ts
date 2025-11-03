@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { NavigationState, UseNavigationReturn } from '../types/navigation';
+import type { NavigationState, UseNavigationReturn } from '../types/navigation';
 import { isActivePath } from '../utils/helpers';
 
 /**
